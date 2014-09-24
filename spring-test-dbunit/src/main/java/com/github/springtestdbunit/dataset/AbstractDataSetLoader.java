@@ -16,6 +16,8 @@
 
 package com.github.springtestdbunit.dataset;
 
+import java.lang.reflect.Method;
+
 import org.dbunit.dataset.IDataSet;
 import org.springframework.core.io.ClassRelativeResourceLoader;
 import org.springframework.core.io.Resource;
@@ -23,11 +25,11 @@ import org.springframework.core.io.ResourceLoader;
 
 /**
  * Abstract data set loader, which provides a basis for concrete implementations of the {@link DataSetLoader} strategy.
- * Provides a <em>Template Method</em> based approach for {@link #loadDataSet(Class, String) loading} data using a
- * Spring {@link #getResourceLoader resource loader}.
- * 
+ * Provides a <em>Template Method</em> based approach for {@link #loadDataSet(Class,Method,String,String) loading} data
+ * using a Spring {@link #getResourceLoader resource loader}.
+ *
  * @author Phillip Webb
- * 
+ *
  * @see #getResourceLoader
  * @see #getResourceLocations
  * @see #createDataSet(Resource)
@@ -41,13 +43,13 @@ public abstract class AbstractDataSetLoader implements DataSetLoader {
 	 * {@link ResourceLoader} returned from {@link #getResourceLoader}.
 	 * <p>
 	 * If no resource can be found then <tt>null</tt> will be returned.
-	 * 
+	 *
 	 * @see #createDataSet(Resource)
-	 * @see com.github.springtestdbunit.dataset.DataSetLoader#loadDataSet(Class, String) java.lang.String)
+	 * @see com.github.springtestdbunit.dataset.DataSetLoader#loadDataSet(Class,Method,String,String) java.lang.String)
 	 */
-	public IDataSet loadDataSet(Class<?> testClass, String location) throws Exception {
+	public IDataSet loadDataSet(Class<?> testClass, Method testMethod, String location, String suffix) throws Exception {
 		ResourceLoader resourceLoader = getResourceLoader(testClass);
-		String[] resourceLocations = getResourceLocations(testClass, location);
+		String[] resourceLocations = getResourceLocations(testClass, testMethod, location, suffix);
 		for (String resourceLocation : resourceLocations) {
 			Resource resource = resourceLoader.getResource(resourceLocation);
 			if (resource.exists()) {
@@ -70,11 +72,20 @@ public abstract class AbstractDataSetLoader implements DataSetLoader {
 	 * Get the resource locations that should be considered when attempting to load a dataset from the specified
 	 * location.
 	 * @param testClass The class under test
+	 * @param testMethod The method under test
 	 * @param location The source location
+	 * @param suffix The resource path suffix, e.g. 'expected.xml','setup.xml','teardown.xml'
 	 * @return an array of potential resource locations
 	 */
-	protected String[] getResourceLocations(Class<?> testClass, String location) {
-		return new String[] { location };
+	protected String[] getResourceLocations(Class<?> testClass, Method testMethod, String location, String suffix) {
+		if ((location != null) && !"".equals(location)) {
+			return new String[] { location };
+		}
+		String[] list = new String[3];
+		list[0] = testClass.getSimpleName() + "-" + testMethod.getName() + "-" + suffix;
+		list[1] = testClass.getSimpleName() + "-" + suffix;
+		list[2] = suffix;
+		return list;
 	}
 
 	/**

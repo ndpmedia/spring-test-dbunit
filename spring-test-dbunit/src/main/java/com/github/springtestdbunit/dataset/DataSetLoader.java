@@ -16,15 +16,17 @@
 
 package com.github.springtestdbunit.dataset;
 
+import java.lang.reflect.Method;
+
 import org.dbunit.dataset.IDataSet;
 
 /**
  * Strategy interface for {@link #loadDataSet loading} a {@link IDataSet dataset}.
  * <p>
  * Concrete implementations must provide a <code>public</code> no-args constructor.
- * 
+ *
  * @author Phillip Webb
- * 
+ *
  * @see FlatXmlDataSetLoader
  */
 public interface DataSetLoader {
@@ -33,9 +35,11 @@ public interface DataSetLoader {
 	 * Load and return {@link IDataSet dataset} from the specified. If the dataset cannot be found <tt>null</tt> may be
 	 * returned.
 	 * @param testClass The class under test
+	 * @param testMethod The method under test
 	 * @param location The location to load
+	 * @param suffix The resource path suffix, e.g. 'expected.xml','setup.xml','teardown.xml'
 	 * @return a {@link IDataSet dataset} or <tt>null</tt>
 	 * @throws Exception If the {@link IDataSet dataset} cannot be loaded
 	 */
-	public IDataSet loadDataSet(Class<?> testClass, String location) throws Exception;
+	public IDataSet loadDataSet(Class<?> testClass, Method testMethod, String location, String suffix) throws Exception;
 }

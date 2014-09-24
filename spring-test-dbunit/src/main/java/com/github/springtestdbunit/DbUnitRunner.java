@@ -17,6 +17,7 @@
 package com.github.springtestdbunit;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -41,7 +42,7 @@ import com.github.springtestdbunit.dataset.DataSetLoader;
 /**
  * Internal delegate class used to run tests with support for {@link DatabaseSetup &#064;DatabaseSetup},
  * {@link DatabaseTearDown &#064;DatabaseTearDown} and {@link ExpectedDatabase &#064;ExpectedDatabase} annotations.
- * 
+ *
  * @author Phillip Webb
  * @author Mario Zagar
  * @author Sunitha Rajarathnam
@@ -110,7 +111,7 @@ class DbUnitRunner {
 		for (ExpectedDatabase annotation : annotations) {
 			String query = annotation.query();
 			String table = annotation.table();
-			IDataSet expectedDataSet = loadDataset(testContext, annotation.value());
+			IDataSet expectedDataSet = loadDataset(testContext, annotation.value(), "expected.xml");
 			if (expectedDataSet != null) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Veriftying @DatabaseTest expectation using " + annotation.value());
@@ -133,15 +134,28 @@ class DbUnitRunner {
 		}
 	}
 
-	private IDataSet loadDataset(DbUnitTestContext testContext, String dataSetLocation) throws Exception {
+	private IDataSet loadDataset(DbUnitTestContext testContext, String dataSetLocation, String suffix) throws Exception {
 		DataSetLoader dataSetLoader = testContext.getDataSetLoader();
-		if (StringUtils.hasLength(dataSetLocation)) {
-			IDataSet dataSet = dataSetLoader.loadDataSet(testContext.getTestClass(), dataSetLocation);
-			Assert.notNull(dataSet,
-					"Unable to load dataset from \"" + dataSetLocation + "\" using " + dataSetLoader.getClass());
-			return dataSet;
+		IDataSet dataSet = dataSetLoader.loadDataSet(testContext.getTestClass(), testContext.getTestMethod(),
+				dataSetLocation, suffix);
+		Assert.notNull(
+				dataSet,
+				"Unable to load dataset from \""
+						+ getLocations(testContext.getTestClass(), testContext.getTestMethod(), dataSetLocation, suffix)
+						+ "\" using " + dataSetLoader.getClass());
+		return dataSet;
+	}
+
+	private List<String> getLocations(Class<?> testClass, Method testMethod, String location, String suffix) {
+		List<String> list = new ArrayList<String>();
+		if ((location != null) && !"".equals(location)) {
+			list.add(location);
+		} else {
+			list.add(testClass.getSimpleName() + "-" + testMethod.getName() + "-" + suffix);
+			list.add(testClass.getSimpleName() + "-" + suffix);
+			list.add(suffix);
 		}
-		return null;
+		return list;
 	}
 
 	private void setupOrTeardown(DbUnitTestContext testContext, boolean isSetup,
@@ -153,11 +167,17 @@ class DbUnitRunner {
 				DatabaseOperation operation = annotation.getType();
 				org.dbunit.operation.DatabaseOperation dbUnitDatabaseOperation = getDbUnitDatabaseOperation(
 						testContext, operation, lastOperation);
-				IDataSet dataSet = loadDataset(testContext, dataSetLocation);
+				String suffix = isSetup ? "setup.xml" : "teardown.xml";
+				IDataSet dataSet = loadDataset(testContext, dataSetLocation, suffix);
 				if (dataSet != null) {
 					if (logger.isDebugEnabled()) {
-						logger.debug("Executing " + (isSetup ? "Setup" : "Teardown") + " of @DatabaseTest using "
-								+ operation + " on " + dataSetLocation);
+						logger.debug("Executing "
+								+ (isSetup ? "Setup" : "Teardown")
+								+ " of @DatabaseTest using "
+								+ operation
+								+ " on "
+								+ getLocations(testContext.getTestClass(), testContext.getTestMethod(),
+										dataSetLocation, suffix));
 					}
 					dbUnitDatabaseOperation.execute(connection, dataSet);
 					lastOperation = operation;

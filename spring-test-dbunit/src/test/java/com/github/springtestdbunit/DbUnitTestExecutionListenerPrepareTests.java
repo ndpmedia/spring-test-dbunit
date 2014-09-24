@@ -16,9 +16,15 @@
 
 package com.github.springtestdbunit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+
+import java.lang.reflect.Method;
 
 import javax.sql.DataSource;
 
@@ -42,7 +48,7 @@ import com.github.springtestdbunit.testutils.ExtendedTestContextManager;
 
 /**
  * Tests for {@link DbUnitTestExecutionListener} prepare method.
- * 
+ *
  * @author Phillip Webb
  */
 public class DbUnitTestExecutionListenerPrepareTests {
@@ -179,7 +185,8 @@ public class DbUnitTestExecutionListenerPrepareTests {
 	}
 
 	public abstract static class AbstractCustomDataSetLoader implements DataSetLoader {
-		public IDataSet loadDataSet(Class<?> testClass, String location) throws Exception {
+		public IDataSet loadDataSet(Class<?> testClass, Method testMethod, String location, String suffix)
+				throws Exception {
 			return null;
 		}
 	}

@@ -16,7 +16,8 @@
 
 package com.github.springtestdbunit.dataset;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.dbunit.dataset.IDataSet;
 import org.junit.Before;
@@ -27,7 +28,7 @@ import com.github.springtestdbunit.testutils.ExtendedTestContextManager;
 
 /**
  * Tests for {@link FlatXmlDataSetLoader}.
- * 
+ *
  * @author Phillip Webb
  */
 public class FlatXmlDataSetLoaderTests {
@@ -45,13 +46,15 @@ public class FlatXmlDataSetLoaderTests {
 
 	@Test
 	public void shouldLoadFromRelativeFile() throws Exception {
-		IDataSet dataset = this.loader.loadDataSet(this.testContext.getTestClass(), "test.xml");
+		IDataSet dataset = this.loader.loadDataSet(this.testContext.getTestClass(), this.testContext.getTestMethod(),
+				"test.xml", null);
 		assertEquals("Sample", dataset.getTableNames()[0]);
 	}
 
 	@Test
 	public void shouldReturnNullOnMissingFile() throws Exception {
-		IDataSet dataset = this.loader.loadDataSet(this.testContext.getTestClass(), "doesnotexist.xml");
+		IDataSet dataset = this.loader.loadDataSet(this.testContext.getTestClass(), this.testContext.getTestMethod(),
+				"doesnotexist.xml", null);
 		assertNull(dataset);
 	}
 }
