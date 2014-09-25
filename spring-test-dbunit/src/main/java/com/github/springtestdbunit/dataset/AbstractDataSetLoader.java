@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 
 import org.dbunit.dataset.IDataSet;
 import org.springframework.core.io.ClassRelativeResourceLoader;
+import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -48,12 +49,14 @@ public abstract class AbstractDataSetLoader implements DataSetLoader {
 	 * @see com.github.springtestdbunit.dataset.DataSetLoader#loadDataSet(Class,Method,String,String) java.lang.String)
 	 */
 	public IDataSet loadDataSet(Class<?> testClass, Method testMethod, String location, String suffix) throws Exception {
-		ResourceLoader resourceLoader = getResourceLoader(testClass);
-		String[] resourceLocations = getResourceLocations(testClass, testMethod, location, suffix);
-		for (String resourceLocation : resourceLocations) {
-			Resource resource = resourceLoader.getResource(resourceLocation);
-			if (resource.exists()) {
-				return createDataSet(resource);
+		ResourceLoader[] resourceLoaders = getResourceLoader(testClass);
+		for (ResourceLoader resourceLoader : resourceLoaders) {
+			String[] resourceLocations = getResourceLocations(testClass, testMethod, location, suffix);
+			for (String resourceLocation : resourceLocations) {
+				Resource resource = resourceLoader.getResource(resourceLocation);
+				if (resource.exists()) {
+					return createDataSet(resource);
+				}
 			}
 		}
 		return null;
@@ -62,10 +65,10 @@ public abstract class AbstractDataSetLoader implements DataSetLoader {
 	/**
 	 * Gets the {@link ResourceLoader} that will be used to load the dataset {@link Resource}s.
 	 * @param testClass The class under test
-	 * @return a resource loader
+	 * @return resource loader list
 	 */
-	protected ResourceLoader getResourceLoader(Class<?> testClass) {
-		return new ClassRelativeResourceLoader(testClass);
+	protected ResourceLoader[] getResourceLoader(Class<?> testClass) {
+		return new ResourceLoader[] { new ClassRelativeResourceLoader(testClass), new DefaultResourceLoader() };
 	}
 
 	/**
