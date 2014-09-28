@@ -16,6 +16,12 @@
 		<url>https://github.com/springtestdbunit/spring-test-dbunit/issues</url>
 		<system>GitHub Issues</system>
 	</issueManagement>
+	<distributionManagement>
+                <repository>
+                        <id>yeahmobi-releases</id>
+                        <url>http://172.20.0.77:8081/nexus/content/repositories/releases/</url>
+                </repository>
+        </distributionManagement>
 	<licenses>
 		<license>
 			<name>Apache 2</name>
